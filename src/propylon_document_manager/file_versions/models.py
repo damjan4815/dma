@@ -1,3 +1,6 @@
+import hashlib
+import os
+
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.db.models import CharField, EmailField
@@ -71,6 +74,56 @@ class User(AbstractUser):
         return reverse("users:detail", kwargs={"pk": self.id})
 
 
+def user_directory_path(instance: "FileVersion", filename: str) -> str:
+    return os.path.join(
+        f"user_{instance.created_by_id}",
+        instance.path,
+        f"rev_{instance.version_number}-{filename}",
+    )
+
+
 class FileVersion(models.Model):
-    file_name = models.fields.CharField(max_length=512)
+    file_name = models.fields.TextField()
     version_number = models.fields.IntegerField()
+    path = models.fields.TextField()
+
+    file = models.FileField(upload_to=user_directory_path)
+
+    file_size = models.BigIntegerField()
+    mime_type = models.TextField()
+    content_hash = models.TextField()
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=False,
+        blank=False,
+        related_name="file_versions",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["file_name", "version_number", "created_by"],
+                name="unique_file_version_per_user",
+            )
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.pk or "file" in self.get_deferred_fields():
+            data = self.file.read()
+            hash_data = (
+                data
+                + str(self.version_number).encode("utf-8")
+                + str(self.created_by_id).encode("utf-8")
+            )
+            self.content_hash = hashlib.sha256(hash_data).hexdigest()
+            self.file_size = len(data)
+            import mimetypes
+
+            self.mime_type = mimetypes.guess_type(self.file.name)[0] or ""
+            self.file.seek(0)
+
+        super().save(*args, **kwargs)

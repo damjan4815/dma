@@ -1,11 +1,12 @@
 from django.contrib.auth import get_user_model
 from drf_spectacular.utils import extend_schema
 from rest_framework import permissions, viewsets
+from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from rest_framework.decorators import action
-from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
+from rest_framework.mixins import CreateModelMixin, ListModelMixin, RetrieveModelMixin
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.viewsets import GenericViewSet
 
 from ..models import FileVersion
 from .serializers import FileVersionSerializer, UserSerializer
@@ -13,12 +14,20 @@ from .serializers import FileVersionSerializer, UserSerializer
 User = get_user_model()
 
 
-class FileVersionViewSet(RetrieveModelMixin, ListModelMixin, GenericViewSet):
-    authentication_classes = []
-    permission_classes = []
-    serializer_class = FileVersionSerializer
+class FileVersionViewSet(
+    CreateModelMixin, ListModelMixin, RetrieveModelMixin, viewsets.GenericViewSet
+):
     queryset = FileVersion.objects.all()
-    lookup_field = "id"
+    serializer_class = FileVersionSerializer
+    authentication_classes = [SessionAuthentication, TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_queryset(self):
+        return FileVersion.objects.filter(created_by=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save()
 
 
 class UserViewSet(viewsets.ModelViewSet):
