@@ -1,6 +1,7 @@
 """
 Base settings to build other settings files upon.
 """
+
 from pathlib import Path
 
 import environ
@@ -74,6 +75,10 @@ THIRD_PARTY_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "corsheaders",
+    "drf_spectacular",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
 ]
 
 LOCAL_APPS = [
@@ -112,7 +117,9 @@ PASSWORD_HASHERS = [
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-password-validators
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+    },
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
@@ -132,6 +139,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 # STATIC
@@ -269,6 +277,9 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.TokenAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
 }
 
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
@@ -276,3 +287,67 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 # Your stuff...
 # ------------------------------------------------------------------------------
+
+# drf-spectacular
+# ------------------------------------------------------------------------------
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Propylon Document Manager API",
+    "DESCRIPTION": """
+    # File Storage and Retrieval API
+    
+    This API allows users to store, retrieve, and manage files with version control.
+    
+    ## Features
+    - **File Upload**: Upload files with metadata (PDF, DOC, DOCX, TXT, RTF, ODT, max 10MB)
+    - **File Download**: Download files with proper headers
+    - **Version Control**: Automatic version numbering for files with same name
+    - **File Search**: Search files by name
+    - **User Management**: User registration and authentication
+    
+    ## Authentication
+    - Token-based authentication
+    - Session authentication
+    - Users can only access their own files (unless superuser)
+    
+    ## File Types Supported
+    - PDF (.pdf)
+    - Microsoft Word (.doc, .docx)
+    - Text files (.txt)
+    - Rich Text Format (.rtf)
+    - OpenDocument Text (.odt)
+    
+    ## File Size Limits
+    - Maximum file size: 10MB per file
+    
+    ## Getting Started
+    1. Register a new user using `/api/register/`
+    2. Get an authentication token using `/auth-token/`
+    3. Use the token in the Authorization header: `Authorization: Token YOUR_TOKEN`
+    4. Upload files using `/api/file_versions/`
+    5. Download files using `/api/file_versions/{id}/download/`
+    """,
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SCHEMA_PATH_PREFIX": "/api/",
+    "SWAGGER_UI_SETTINGS": {
+        "deepLinking": True,
+        "persistAuthorization": True,
+        "displayOperationId": True,
+        "tryItOutEnabled": True,
+    },
+    "REDOC_UI_SETTINGS": {
+        "hideDownloadButton": False,
+        "hideHostname": False,
+        "hideLoading": False,
+        "pathInMiddlePanel": True,
+        "requiredPropsFirst": True,
+        "scrollYOffset": 50,
+        "showExtensions": True,
+        "sortPropsAlphabetically": True,
+    },
+    "TAGS": [
+        {"name": "files", "description": "File management operations"},
+        {"name": "users", "description": "User management operations"},
+    ],
+}
