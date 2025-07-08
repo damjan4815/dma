@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from ..models import FileVersion, User
+from ..models import FileVersion
 
 AuthUser = get_user_model()
 
@@ -71,7 +71,6 @@ class FileVersionSerializer(serializers.ModelSerializer):
             .first()
         )
         next_version = last.version_number + 1 if last else 1
-        print("url ", validated_data.get("path"))
         instance = FileVersion.objects.create(
             file_name=name,
             version_number=next_version,
@@ -118,11 +117,3 @@ class UserSerializer(serializers.ModelSerializer):
             name=validated_data.get("name", ""),
         )
         return user
-
-    def update(self, instance: User, validated_data: dict):
-        if "password" in validated_data:
-            instance.set_password(validated_data.pop("password"))
-        for attr, val in validated_data.items():
-            setattr(instance, attr, val)
-        instance.save()
-        return instance

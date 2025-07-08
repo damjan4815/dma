@@ -13,7 +13,6 @@ from rest_framework.mixins import (
     RetrieveModelMixin,
 )
 from rest_framework.parsers import FormParser, MultiPartParser
-from rest_framework.request import Request
 from rest_framework.response import Response
 
 from ..models import FileVersion
@@ -44,6 +43,7 @@ class FileVersionViewSet(
 
 class FileDownloadViewSet(viewsets.GenericViewSet):
     permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [SessionAuthentication, TokenAuthentication]
 
     def get_queryset(self):
         return FileVersion.objects.filter(created_by=self.request.user)
@@ -119,29 +119,20 @@ class FileDownloadViewSet(viewsets.GenericViewSet):
         )
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(CreateModelMixin, viewsets.GenericViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    authentication_classes = [SessionAuthentication, TokenAuthentication]
 
     def get_permissions(self):
-        if self.action in ["create"]:
+        if self.action == "create":
             return [permissions.AllowAny()]
-        if self.action in ["self", "update_self", "list", "retrieve"]:
+        if self.action == "me":
             return [permissions.IsAuthenticated()]
         return [permissions.IsAdminUser()]
 
-    @extend_schema(responses=UserSerializer, summary="Retrieve own user")
-    @action(detail=False, methods=["get"], url_path="self")
-    def self(self, request: Request):
+    @extend_schema(responses=UserSerializer, summary="Get own profile")
+    @action(detail=False, methods=["get"], url_path="me")
+    def me(self, request):
         serializer = self.get_serializer(request.user)
-        return Response(serializer.data)
-
-    @extend_schema(
-        request=UserSerializer, responses=UserSerializer, summary="Update own user"
-    )
-    @action(detail=False, methods=["put", "patch"], url_path="self")
-    def update_self(self, request: Request):
-        serializer = self.get_serializer(request.user, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
         return Response(serializer.data)

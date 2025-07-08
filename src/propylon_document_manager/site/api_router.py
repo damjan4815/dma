@@ -12,7 +12,7 @@ if settings.DEBUG:
 else:
     router = SimpleRouter()
 
-router.register("file_versions", FileVersionViewSet)
+router.register(r"file_versions", FileVersionViewSet)
 router.register(r"users", UserViewSet, basename="user")
 
 router.register(r"files", FileDownloadViewSet, basename="files")
