@@ -292,40 +292,6 @@ CORS_ALLOW_ALL_ORIGINS = True
 # ------------------------------------------------------------------------------
 SPECTACULAR_SETTINGS = {
     "TITLE": "Propylon Document Manager API",
-    "DESCRIPTION": """
-    # File Storage and Retrieval API
-    
-    This API allows users to store, retrieve, and manage files with version control.
-    
-    ## Features
-    - **File Upload**: Upload files with metadata (PDF, DOC, DOCX, TXT, RTF, ODT, max 10MB)
-    - **File Download**: Download files with proper headers
-    - **Version Control**: Automatic version numbering for files with same name
-    - **File Search**: Search files by name
-    - **User Management**: User registration and authentication
-    
-    ## Authentication
-    - Token-based authentication
-    - Session authentication
-    - Users can only access their own files (unless superuser)
-    
-    ## File Types Supported
-    - PDF (.pdf)
-    - Microsoft Word (.doc, .docx)
-    - Text files (.txt)
-    - Rich Text Format (.rtf)
-    - OpenDocument Text (.odt)
-    
-    ## File Size Limits
-    - Maximum file size: 10MB per file
-    
-    ## Getting Started
-    1. Register a new user using `/api/register/`
-    2. Get an authentication token using `/auth-token/`
-    3. Use the token in the Authorization header: `Authorization: Token YOUR_TOKEN`
-    4. Upload files using `/api/file_versions/`
-    5. Download files using `/api/file_versions/{id}/download/`
-    """,
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
@@ -349,5 +315,9 @@ SPECTACULAR_SETTINGS = {
     "TAGS": [
         {"name": "files", "description": "File management operations"},
         {"name": "users", "description": "User management operations"},
+        {
+            "name": "file_versions",
+            "description": "File upload and versioning opertaions",
+        },
     ],
 }

@@ -10,7 +10,6 @@ AuthUser = get_user_model()
 
 
 class FileVersionSerializer(serializers.ModelSerializer):
-    file = serializers.FileField(read_only=True)
     upload = serializers.FileField(write_only=True, required=True)
 
     class Meta:
@@ -20,7 +19,6 @@ class FileVersionSerializer(serializers.ModelSerializer):
             "file_name",
             "version_number",
             "path",
-            "file",
             "file_size",
             "mime_type",
             "content_hash",
@@ -32,7 +30,6 @@ class FileVersionSerializer(serializers.ModelSerializer):
             "id",
             "file_name",
             "version_number",
-            "file",
             "file_size",
             "mime_type",
             "content_hash",
@@ -83,6 +80,11 @@ class FileVersionSerializer(serializers.ModelSerializer):
             path=validated_data.get("path"),
         )
         return instance
+
+    def perform_destroy(self, instance):
+        if instance.created_by != self.request.user:
+            return
+        instance.delete()
 
 
 class UserSerializer(serializers.ModelSerializer):
