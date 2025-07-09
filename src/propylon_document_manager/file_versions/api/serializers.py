@@ -1,6 +1,7 @@
 import re
 
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
@@ -64,20 +65,22 @@ class FileVersionSerializer(serializers.ModelSerializer):
         upload = validated_data.pop("upload")
         user = self.context["request"].user
         name = upload.name
+        with transaction.atomic():
+            last = (
+                FileVersion.objects.select_for_update()
+                .filter(file_name=name, created_by=user)
+                .order_by("-version_number")
+                .first()
+            )
+            next_version = last.version_number + 1 if last else 1
 
-        last = (
-            FileVersion.objects.filter(file_name=name, created_by=user)
-            .order_by("-version_number")
-            .first()
-        )
-        next_version = last.version_number + 1 if last else 1
-        instance = FileVersion.objects.create(
-            file_name=name,
-            version_number=next_version,
-            created_by=user,
-            file=upload,
-            path=validated_data.get("path"),
-        )
+            instance = FileVersion.objects.create(
+                file_name=name,
+                version_number=next_version,
+                created_by=user,
+                file=upload,
+                path=validated_data.get("path"),
+            )
         return instance
 
     def perform_destroy(self, instance):
